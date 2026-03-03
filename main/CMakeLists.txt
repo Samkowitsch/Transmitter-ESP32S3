@@ -28,11 +28,14 @@ idf_component_register(
     "gui/driver/esp32/waveshare_bsp.c"
     "gui/driver/esp32/rgb_interface.c"
     "gui/driver/esp32/lvgl_port.c"
+    "sdcard/sdcard_interface.c"
     
     REQUIRES 
         esp_timer
         esp_wifi
         nvs_flash
+        esp_driver_sdmmc
+        fatfs
 
     INCLUDE_DIRS 
     "."

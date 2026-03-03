@@ -109,3 +109,9 @@ void set_backlight(bool state){
     ESP_ERROR_CHECK(i2c_master_transmit(ch422g_wr_io , (uint8_t*)&wr_io_pins , 1 , CH422G_I2C_TIMEOUT / portTICK_PERIOD_MS ));
 
 }
+
+
+void set_sdcard_cs(bool state){
+    wr_io_pins.sd_select = state;
+    ESP_ERROR_CHECK(i2c_master_transmit(ch422g_wr_io , (uint8_t*)&wr_io_pins , 1 , CH422G_I2C_TIMEOUT / portTICK_PERIOD_MS )); 
+}

@@ -1,0 +1,91 @@
+#include "sdcard_interface.h"
+#include "driver/sdmmc_host.h"
+#include "esp_vfs_fat.h"
+
+#include "gui/driver/esp32/waveshare_bsp.h"
+
+#define MOUNT_POINT "/sdcard"
+
+static const char *TAG = "SDCARD";
+
+// Pin assignments for SD SPI interface
+#define PIN_NUM_MISO 13 /*!< Pin number for MISO    */
+#define PIN_NUM_MOSI 11 /*!< Pin number for MOSI   */
+#define PIN_NUM_CLK 12   /*!< Pin number for CLK    */
+#define PIN_NUM_CS -1     /*!< Pin number for CS CS  */
+
+
+sdmmc_card_t *card;
+
+// By default, SD card frequency is initialized to SDMMC_FREQ_DEFAULT (20MHz)
+// For setting a specific frequency, use host.max_freq_khz (range 400kHz - 20MHz for SDSPI)
+// Example: for fixed frequency of 10MHz, use host.max_freq_khz = 10000;
+sdmmc_host_t host = SDSPI_HOST_DEFAULT();
+const char mount_point[] = MOUNT_POINT;
+
+esp_err_t init_sdcard(){
+    ESP_LOGI(TAG , "Init sd-card");
+    esp_err_t ret;
+
+    set_sdcard_cs(false);
+
+    // Options for mounting the filesystem
+    esp_vfs_fat_sdmmc_mount_config_t mount_config = {
+        .format_if_mount_failed = false, // If mount fails, do not format card
+        .max_files = 20,                   // Maximum number of files
+        .allocation_unit_size = 16 * 1024 // Set allocation unit size
+    };
+
+    // Initializing SD card
+    ESP_LOGW(TAG, "Initializing SD card");
+
+    // Configure SPI bus for SD card configuration
+    spi_bus_config_t bus_cfg = {
+        .mosi_io_num = PIN_NUM_MOSI, // Set MOSI pin
+        .miso_io_num = PIN_NUM_MISO, // Set MISO pin
+        .sclk_io_num = PIN_NUM_CLK,  // Set SCLK pin
+        .quadwp_io_num = -1,         // Not used
+        .quadhd_io_num = -1,         // Not used
+        .max_transfer_sz = 4000,     // Maximum transfer size
+    };
+
+        // Initialize SPI bus
+    ret = spi_bus_initialize(host.slot, &bus_cfg, SDSPI_DEFAULT_DMA);
+    if (ret != ESP_OK)
+    {
+        // Failed to initialize bus
+        ESP_LOGW(TAG, "Failed to initialize bus.");
+        return ESP_FAIL;
+    }
+
+    // Configure SD card slot
+    sdspi_device_config_t slot_config = SDSPI_DEVICE_CONFIG_DEFAULT();
+    slot_config.gpio_cs = PIN_NUM_CS; // Set CS pin
+    slot_config.host_id = host.slot;  // Set host ID
+    
+    // Mounting filesystem
+    ESP_LOGW(TAG, "Mounting filesystem");
+    ret = esp_vfs_fat_sdspi_mount(mount_point, &host, &slot_config, &mount_config, &card);
+
+    if (ret != ESP_OK)
+    {
+        if (ret == ESP_FAIL)
+        {
+            // Failed to mount filesystem
+            ESP_LOGW(TAG, "Failed to mount filesystem. "
+                          "If you want the card to be formatted, set the CONFIG_EXAMPLE_FORMAT_IF_MOUNT_FAILED menuconfig option.");
+        }
+        else
+        {
+            // Failed to initialize the card
+            ESP_LOGW(TAG, "Failed to initialize the card (%s). "
+                          "Make sure SD card lines have pull-up resistors in place.",
+                     esp_err_to_name(ret));
+        }
+        return ESP_FAIL;
+    }
+
+    // Filesystem mounted
+    ESP_LOGW(TAG, "Filesystem mounted");
+    return ESP_OK;
+}

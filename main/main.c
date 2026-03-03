@@ -5,6 +5,9 @@
 
 #include "gui/gui.h"
 #include "freertos/FreeRTOS.h"
+#include "sdcard/sdcard_interface.h"
+
+static const char TAG[] = "MAIN";
 
 void app_main(void)
 {
@@ -23,7 +26,11 @@ init_espnow_task();
 
 //waveshare_esp32_s3_rgb_lcd_init(800 , 480);
 //lcd_backlight_on();
+ESP_LOGI(TAG , "Init gui");
 init_gui();
+ESP_LOGI(TAG , "Init sdcard");
+init_sdcard();
+read_model_setup();
 
 while (1)
 {

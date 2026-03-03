@@ -10,9 +10,10 @@
 #include "cJSON.h"
 #include "src/misc/lv_fs.h"
 #include "string.h"
+#include "esp_log.h"
 
 t_model_setup model_setup = {0};
-
+static const char TAG[] = "SETUP";
 
 t_channel_setup * get_channel_setup(const int channel) {
 
@@ -84,12 +85,12 @@ void list_existing_files() {
 void read_model_setup() {
     lv_fs_res_t result;
     lv_fs_file_t file;
-    /*
+    
     
 
-    result = lv_fs_open(&file, "S:setup.json", LV_FS_MODE_RD);
+    result = lv_fs_open(&file, "A:sdcard/setup.json", LV_FS_MODE_RD);
     if (result != LV_FS_RES_OK) {
-        LV_LOG_ERROR("Error opening file");
+        ESP_LOGE(TAG , "Error opening file");
     }
     uint32_t file_size;
 
@@ -145,7 +146,7 @@ void read_model_setup() {
 
     cJSON_Delete(setup_json);
     lv_fs_close(&file);
-    */
+    
 }
 
 void write_model_setup() {
@@ -153,7 +154,7 @@ void write_model_setup() {
 
     lv_fs_res_t result;
     lv_fs_file_t file;
-    /*
+    
     list_existing_files();
     cJSON* setup_json = cJSON_CreateObject();
     if (setup_json == NULL) {
@@ -188,16 +189,18 @@ void write_model_setup() {
     cJSON_AddItemToObject(setup_json, "channel_setup", channel_setup_json);
 
 
-    result = lv_fs_open(&file, "S:setup.json", LV_FS_MODE_RD | LV_FS_MODE_WR);
+    result = lv_fs_open(&file, "A:sdcard/setup.json", LV_FS_MODE_RD | LV_FS_MODE_WR);
     if (result != LV_FS_RES_OK) {
-        LV_LOG_ERROR("Error opening file");
-    }
+        ESP_LOGE(TAG , "Error opening file %d" , result);
+    }else{
         char* string = cJSON_Print(setup_json);
 
         lv_fs_write(&file , string , strlen(string) , NULL);
 
-    lv_fs_close(&file);
+        lv_fs_close(&file);
+    }
+
 
     cJSON_Delete(setup_json);
-    */
+    
 }

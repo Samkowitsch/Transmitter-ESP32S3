@@ -42,5 +42,6 @@ void set_lcd(bool state);
 void set_touch(bool state);
 void set_can_enable(bool state);
 void set_backlight(bool state);
+void set_sdcard_cs(bool state);
 
 #endif
